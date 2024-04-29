@@ -11,7 +11,6 @@ vim.api.nvim_create_user_command("Format", function(args)
 end, { range = true })
 
 vim.wo.number = true
-vim.api.nvim_set_keymap("n", "<D-b>", ":NvimTreeToggle", {})
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -24,6 +23,10 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 		lazypath,
 	})
 end
+
+vim.opt.tabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.expandtab = true
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
@@ -159,35 +162,78 @@ require("lazy").setup({
 		},
 	},
 	{
-		"romgrk/barbar.nvim",
+		"tiagovla/scope.nvim",
+	},
+	{
+		"kdheepak/lazygit.nvim",
+		cmd = {
+			"LazyGit",
+			"LazyGitConfig",
+			"LazyGitCurrentFile",
+			"LazyGitFilter",
+			"LazyGitFilterCurrentFile",
+		},
+		-- optional for floating window border decoration
 		dependencies = {
-			"lewis6991/gitsigns.nvim", -- OPTIONAL: for git status
-			"nvim-tree/nvim-web-devicons", -- OPTIONAL: for file icons
+			"nvim-lua/plenary.nvim",
 		},
-		init = function()
-			vim.g.barbar_auto_setup = false
+		-- setting the keybinding for LazyGit with 'keys' is recommended in
+		-- order to load the plugin when the command is run for the first time
+		keys = {
+			{ "<leader>lg", "<cmd>LazyGit<cr>", desc = "LazyGit" },
+		},
+	},
+	{
+		"cshuaimin/ssr.nvim",
+	},
+	{
+		"lewis6991/gitsigns.nvim",
+	},
+	{
+		"karb94/neoscroll.nvim",
+		config = function()
+			require("neoscroll").setup({})
 		end,
-		opts = {
-			-- lazy.nvim will automatically call setup for you. put your options here, anything missing will use the default:
-			-- animation = true,
-			-- insert_at_start = true,
-			-- …etc.
-		},
-		version = "^1.0.0", -- optional: only update when a new 1.x version is released
+	},
+	{
+		"nvim-treesitter/nvim-treesitter-textobjects",
+		config = function()
+			require("nvim-treesitter.configs").setup({
+				textobjects = {
+					lsp_interop = {
+						enable = true,
+						border = "none",
+						floating_preview_opts = {},
+						peek_definition_code = {
+							["<leader>df"] = "@function.outer",
+							["<leader>dF"] = "@class.outer",
+						},
+					},
+				},
+			})
+		end,
 	},
 })
 
+require("gitsigns").setup()
 require("leap").create_default_mappings()
 local builtin = require("telescope.builtin")
-vim.keymap.set("n", "<leader>ff", builtin.find_files, {})
-vim.keymap.set("n", "<leader>fg", builtin.live_grep, {})
-vim.keymap.set("n", "<leader>fb", builtin.buffers, {})
-vim.keymap.set("n", "<leader>fh", builtin.help_tags, {})
-vim.keymap.set("n", "<leader>fr", builtin.lsp_references, {})
-vim.keymap.set("n", "<leader>fic", builtin.lsp_incoming_calls, {})
-vim.keymap.set("n", "<leader>foc", builtin.lsp_outgoing_calls, {})
-vim.keymap.set("n", "<leader>fds", builtin.lsp_document_symbols, {})
+vim.keymap.set("n", "<leader>p", builtin.find_files, {})
+vim.keymap.set("n", "<leader>f", builtin.live_grep, {})
+vim.keymap.set("n", "<leader>g", ":LazyGit<CR>", {})
+vim.keymap.set("n", "<leader>b", builtin.buffers, {})
+vim.keymap.set("n", "<leader>r", builtin.lsp_references, {})
+vim.keymap.set("n", "<leader>ic", builtin.lsp_incoming_calls, {})
+vim.keymap.set("n", "<leader>oc", builtin.lsp_outgoing_calls, {})
+vim.keymap.set("n", "<leader>t", builtin.lsp_document_symbols, {})
+vim.keymap.set("n", "<leader>T", builtin.lsp_workspace_symbols, {})
+vim.keymap.set("n", "<leader>b", ":NvimTreeToggle<CR>", {})
 
+vim.keymap.set("n", "<leader>sr", function()
+	require("ssr").open()
+end)
+
+vim.keymap.set("n", "<leader>h", ":call  CocActionAsync('doHover')<cr>", {})
 require("mason").setup()
 require("mason-lspconfig").setup({
 	ensure_installed = { "tsserver", "lua_ls" },
